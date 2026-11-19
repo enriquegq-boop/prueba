@@ -15,9 +15,6 @@ public final class ModItems {
 	public static final Item MURCIELAGO_MUTANTE_SPAWN_EGG = register(
 		"murcielago_mutante_spawn_egg", SpawnEggItem::new, new Item.Properties().spawnEgg(ModEntities.MURCIELAGO_MUTANTE)
 	);
-	public static final Item LEPISMA_SULFURICO_SPAWN_EGG = register(
-		"lepisma_sulfurico_spawn_egg", SpawnEggItem::new, new Item.Properties().spawnEgg(ModEntities.LEPISMA_SULFURICO)
-	);
 	/** Se usa como "dibujo" de la bola de azufre que dispara el jefe. */
 	public static final Item BOLA_AZUFRE = register("bola_azufre", Item::new, new Item.Properties());
 
@@ -32,7 +29,6 @@ public final class ModItems {
 	public static void init() {
 		CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.SPAWN_EGGS).register(output -> {
 			output.accept(MURCIELAGO_MUTANTE_SPAWN_EGG);
-			output.accept(LEPISMA_SULFURICO_SPAWN_EGG);
 		});
 	}
 }

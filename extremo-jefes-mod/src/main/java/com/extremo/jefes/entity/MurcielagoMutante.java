@@ -1,10 +1,9 @@
 package com.extremo.jefes.entity;
 
-import com.extremo.jefes.registry.ModEntities;
+import com.extremo.jefes.BarraExtremo;
 import java.util.EnumSet;
 import java.util.List;
 import net.minecraft.ChatFormatting;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
@@ -23,7 +22,6 @@ import net.minecraft.world.Difficulty;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.AnimationState;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -47,34 +45,31 @@ import org.jspecify.annotations.Nullable;
  * Jefe del día 2: el Murciélago Mutante de las minas infectadas.
  *
  * <ul>
- *   <li>Barra de jefe amarilla con su nombre.</li>
- *   <li>Engendra Lepismas Sulfúricos (si te golpean te hunden un bloque hacia abajo).</li>
+ *   <li>Barra de vida estilo Extremo (arriba a la izquierda) con su nombre.</li>
  *   <li>Mordisco en picado que pega fuerte.</li>
  *   <li>Escupe bolas de azufre.</li>
- *   <li>Por debajo del 50% de vida se enfurece: chillido que empuja, ataca más rápido y engendra más lepismas.</li>
- *   <li>Al morir, todos sus lepismas mueren con él.</li>
+ *   <li>Por debajo del 50% de vida se enfurece: chillido que empuja y ataca más rápido.</li>
+ *   <li>Los Lepismas Sulfúricos vendrán del mod de mobs de azufre (pendiente de unir).</li>
  * </ul>
  */
 public class MurcielagoMutante extends Monster {
 	public static final float VIDA_MAXIMA = 300.0F;
 	private static final DustParticleOptions POLVO_AZUFRE = new DustParticleOptions(BolaAzufre.COLOR_AZUFRE, 2.0F);
 	private static final double RADIO_ANUNCIO = 96.0;
-	private static final double RADIO_LEPISMAS = 48.0;
 	private static final EntityDataAccessor<Boolean> DATA_ENFURECIDO = SynchedEntityData.defineId(MurcielagoMutante.class, EntityDataSerializers.BOOLEAN);
 
+	/** Barra de jefe: usa el id especial de Extremo para que el cliente la dibuje con el estilo de la serie. */
 	private final ServerBossEvent bossEvent = new ServerBossEvent(
-		Mth.createInsecureUUID(this.random), this.getDisplayName(), BossEvent.BossBarColor.YELLOW, BossEvent.BossBarOverlay.NOTCHED_10
+		BarraExtremo.nuevoId(this.random), this.getDisplayName(), BossEvent.BossBarColor.YELLOW, BossEvent.BossBarOverlay.PROGRESS
 	);
 	public final AnimationState flyAnimationState = new AnimationState();
 
 	private boolean enfurecido;
 	private boolean anunciado;
 	private int cooldownBola = 60;
-	private int cooldownLepismas = 40;
 	private int cooldownPicado = 40;
 	// Contadores (solo informativos; los usan las pruebas automáticas).
 	private int totalBolas;
-	private int totalLepismas;
 	private int totalMordiscos;
 
 	public MurcielagoMutante(final EntityType<? extends MurcielagoMutante> type, final Level level) {
@@ -83,7 +78,6 @@ public class MurcielagoMutante extends Monster {
 		this.xpReward = 150;
 		this.setNoGravity(true);
 		this.setPersistenceRequired();
-		this.bossEvent.setDarkenScreen(true);
 	}
 
 	public static AttributeSupplier.Builder createAttributes() {
@@ -104,7 +98,7 @@ public class MurcielagoMutante extends Monster {
 		this.goalSelector.addGoal(4, new RodearObjetivoGoal());
 		this.goalSelector.addGoal(8, new VueloAleatorioGoal());
 		this.goalSelector.addGoal(9, new LookAtPlayerGoal(this, Player.class, 16.0F, 1.0F));
-		this.targetSelector.addGoal(1, new HurtByTargetGoal(this, LepismaSulfurico.class));
+		this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
 		this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, false));
 	}
 
@@ -130,6 +124,10 @@ public class MurcielagoMutante extends Monster {
 	public void tick() {
 		super.tick();
 		this.setNoGravity(true);
+		if (!this.level().isClientSide()) {
+			// La barra sigue la vida siempre (también si un admin lo congela con NoAI).
+			this.bossEvent.setProgress(this.getHealth() / this.getMaxHealth());
+		}
 		if (this.level().isClientSide()) {
 			this.flyAnimationState.startIfStopped(this.tickCount);
 			if (this.random.nextInt(4) == 0) {
@@ -144,7 +142,6 @@ public class MurcielagoMutante extends Monster {
 		if (!this.anunciado) {
 			this.anunciado = true;
 			this.anunciar(level, Component.translatable("anuncio.extremo_jefes.murcielago_mutante.despierta"), SoundEvents.WITHER_SPAWN);
-			this.anunciar(level, Component.translatable("anuncio.extremo_jefes.lepisma_sulfurico.despierta"), null);
 		}
 
 		if (!this.enfurecido && this.getHealth() <= this.getMaxHealth() * 0.5F) {
@@ -153,9 +150,6 @@ public class MurcielagoMutante extends Monster {
 
 		if (this.cooldownBola > 0) {
 			this.cooldownBola--;
-		}
-		if (this.cooldownLepismas > 0) {
-			this.cooldownLepismas--;
 		}
 		if (this.cooldownPicado > 0) {
 			this.cooldownPicado--;
@@ -168,13 +162,9 @@ public class MurcielagoMutante extends Monster {
 				this.dispararBolas(level, target);
 				this.cooldownBola = (this.enfurecido ? 45 : 70) + this.random.nextInt(25);
 			}
-			if (this.cooldownLepismas <= 0 && distSqr < RADIO_LEPISMAS * RADIO_LEPISMAS) {
-				this.engendrarLepismas(level, target, this.enfurecido ? 4 : 2);
-				this.cooldownLepismas = (this.enfurecido ? 160 : 220) + this.random.nextInt(40);
-			}
+			// TODO (unión con el mod de mobs de azufre): aquí engendrará sus Lepismas Sulfúricos.
 		}
 
-		this.bossEvent.setProgress(this.getHealth() / this.getMaxHealth());
 	}
 
 	// --------------------------------------------------------------- ataques
@@ -197,62 +187,6 @@ public class MurcielagoMutante extends Monster {
 		level.playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.WITHER_SHOOT, SoundSource.HOSTILE, 1.5F, 0.6F);
 	}
 
-	/** Engendra lepismas junto al objetivo, sin pasar de un máximo vivo a la vez. */
-	public int engendrarLepismas(final ServerLevel level, final LivingEntity target, final int cantidad) {
-		int maximo = this.enfurecido ? 10 : 6;
-		int vivos = this.contarLepismas(level);
-		int aEngendrar = Math.min(cantidad, maximo - vivos);
-		int engendrados = 0;
-		for (int i = 0; i < aEngendrar; i++) {
-			BlockPos pos = this.buscarSueloCerca(level, target.blockPosition());
-			if (pos == null) {
-				continue;
-			}
-			LepismaSulfurico lepisma = ModEntities.LEPISMA_SULFURICO.create(level, EntitySpawnReason.MOB_SUMMONED);
-			if (lepisma == null) {
-				continue;
-			}
-			lepisma.snapTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, this.random.nextFloat() * 360.0F, 0.0F);
-			lepisma.setTarget(target);
-			lepisma.setJefe(this.getUUID());
-			level.addFreshEntity(lepisma);
-			level.sendParticles(POLVO_AZUFRE, lepisma.getX(), lepisma.getY() + 0.2, lepisma.getZ(), 12, 0.3, 0.2, 0.3, 0.02);
-			engendrados++;
-			this.totalLepismas++;
-		}
-		if (engendrados > 0) {
-			level.playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.SILVERFISH_AMBIENT, SoundSource.HOSTILE, 2.0F, 0.5F);
-		}
-		return engendrados;
-	}
-
-	private int contarLepismas(final ServerLevel level) {
-		return this.misLepismas(level).size();
-	}
-
-	/** Lepismas vivos engendrados por este jefe. */
-	public List<LepismaSulfurico> misLepismas(final ServerLevel level) {
-		return level.getEntitiesOfClass(
-			LepismaSulfurico.class, this.getBoundingBox().inflate(RADIO_LEPISMAS), l -> l.isAlive() && this.getUUID().equals(l.getJefe())
-		);
-	}
-
-	private @Nullable BlockPos buscarSueloCerca(final ServerLevel level, final BlockPos centro) {
-		for (int intento = 0; intento < 10; intento++) {
-			int dx = this.random.nextInt(7) - 3;
-			int dz = this.random.nextInt(7) - 3;
-			for (int dy = 2; dy >= -4; dy--) {
-				BlockPos pos = centro.offset(dx, dy, dz);
-				if (level.getBlockState(pos).isAir()
-					&& level.getBlockState(pos.above()).isAir()
-					&& level.getBlockState(pos.below()).isFaceSturdy(level, pos.below(), net.minecraft.core.Direction.UP)) {
-					return pos;
-				}
-			}
-		}
-		return null;
-	}
-
 	private void enfurecerse(final ServerLevel level) {
 		this.setEnfurecido(true);
 		this.anunciar(level, Component.translatable("anuncio.extremo_jefes.murcielago_mutante.enfurecido"), SoundEvents.RAVAGER_ROAR);
@@ -267,10 +201,6 @@ public class MurcielagoMutante extends Monster {
 			lejos = lejos.normalize().scale(1.6);
 			player.setDeltaMovement(player.getDeltaMovement().add(lejos.x, 0.6, lejos.z));
 			player.hurtMarked = true;
-		}
-		LivingEntity target = this.getTarget();
-		if (target != null) {
-			this.engendrarLepismas(level, target, 4);
 		}
 	}
 
@@ -288,7 +218,7 @@ public class MurcielagoMutante extends Monster {
 
 	@Override
 	public boolean hurtServer(final ServerLevel level, final DamageSource source, final float damage) {
-		if (source.getEntity() instanceof LepismaSulfurico || source.getEntity() instanceof MurcielagoMutante) {
+		if (source.getEntity() instanceof MurcielagoMutante) {
 			return false;
 		}
 		return super.hurtServer(level, source, damage);
@@ -299,10 +229,6 @@ public class MurcielagoMutante extends Monster {
 		super.die(source);
 		if (this.level() instanceof ServerLevel level) {
 			this.bossEvent.setProgress(0.0F);
-			// "Si lo matamos no sale el lepisma": todos sus lepismas mueren con él.
-			for (LepismaSulfurico lepisma : this.misLepismas(level)) {
-				lepisma.kill(level);
-			}
 			this.anunciar(level, Component.translatable("anuncio.extremo_jefes.murcielago_mutante.derrotado"), SoundEvents.UI_TOAST_CHALLENGE_COMPLETE);
 		}
 	}
@@ -603,10 +529,6 @@ public class MurcielagoMutante extends Monster {
 
 	public int getTotalBolas() {
 		return this.totalBolas;
-	}
-
-	public int getTotalLepismas() {
-		return this.totalLepismas;
 	}
 
 	public int getTotalMordiscos() {

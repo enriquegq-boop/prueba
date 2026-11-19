@@ -1,7 +1,7 @@
-"""Genera las texturas del mod (Murciélago Mutante, ojos, lepisma, objetos).
+"""Genera las texturas del mod (Murciélago Mutante, ojos, barra de vida Extremo, objetos).
 
 Uso:  python3 tools/generar_texturas.py <carpeta_texturas_vanilla>
-La carpeta vanilla debe tener silverfish.png, bat_spawn_egg.png y fire_charge.png
+La carpeta vanilla debe tener bat_spawn_egg.png
 (se usan solo como plantilla de forma; los colores se repintan).
 """
 import os
@@ -192,6 +192,148 @@ def bola():
     return img
 
 
+# ----------------------------------------------------------------- barra de vida Extremo
+ORO_CLARO = (248, 214, 112)
+ORO = (226, 172, 64)
+ORO_MEDIO = (190, 132, 40)
+ORO_OSC = (122, 78, 18)
+CONTORNO = (52, 30, 8)
+
+
+def _px(img, x, y, c, a=255):
+    if 0 <= x < img.width and 0 <= y < img.height:
+        img.putpixel((x, y), tuple(c) + (a,))
+
+
+def _gota(img, x, y0, largo, oy=0):
+    """Gota de azufre colgando: 2 px de ancho arriba, punta redonda abajo."""
+    for y in range(y0, y0 + largo):
+        _px(img, x, y + oy, ORO if y < y0 + largo - 1 else ORO_MEDIO)
+        if y < y0 + largo - 2:
+            _px(img, x + 1, y + oy, ORO_MEDIO)
+    _px(img, x - 1, y0 + largo - 2 + oy, ORO_MEDIO)
+    _px(img, x + 1, y0 + largo - 2 + oy, ORO_OSC)
+    _px(img, x, y0 + largo + oy, CONTORNO)
+    _px(img, x, y0 + oy, ORO_CLARO)
+
+
+def _marco(img, oy, furia):
+    # fondo de la barra
+    for x in range(25, 147):
+        for y in range(8, 17):
+            _px(img, x, y + oy, (34, 22, 12), 230)
+    # contorno oscuro + marco dorado
+    for x in range(23, 149):
+        _px(img, x, 6 + oy, CONTORNO)
+        _px(img, x, 18 + oy, CONTORNO)
+    for y in range(6, 19):
+        _px(img, 23, y + oy, CONTORNO)
+        _px(img, 148, y + oy, CONTORNO)
+    for x in range(24, 148):
+        _px(img, x, 7 + oy, ORO_CLARO if x % 9 else ORO)
+        _px(img, x, 17 + oy, ORO_MEDIO)
+    for y in range(7, 18):
+        _px(img, 24, y + oy, ORO)
+        _px(img, 147, y + oy, ORO_MEDIO)
+    # adornos de arriba (pequeñas cúpulas doradas)
+    for cx in (46, 96):
+        for dx in (-2, -1, 0, 1, 2):
+            _px(img, cx + dx, 6 + oy, ORO if abs(dx) < 2 else ORO_MEDIO)
+        for dx in (-1, 0, 1):
+            _px(img, cx + dx, 5 + oy, ORO_CLARO if dx == 0 else ORO)
+        _px(img, cx, 4 + oy, ORO_CLARO)
+        _px(img, cx, 3 + oy, CONTORNO)
+    # gotas de azufre colgando de la barra
+    _gota(img, 34, 18, 4, oy)
+    _gota(img, 96, 18, 2, oy)
+    _gota(img, 143, 18, 6, oy)
+    # remate del extremo derecho: tres puntas
+    for x in range(144, 154):
+        for y in range(4, 8):
+            _px(img, x, y + oy, ORO if y > 4 else ORO_CLARO)
+        _px(img, x, 8 + oy, ORO_MEDIO)
+    for y in range(4, 9):
+        _px(img, 143, y + oy, CONTORNO)
+        _px(img, 154, y + oy, CONTORNO)
+    for px_ in (145, 149, 152):
+        _px(img, px_, 3 + oy, ORO_CLARO)
+        _px(img, px_, 2 + oy, ORO)
+        _px(img, px_, 1 + oy, CONTORNO)
+    # medallón
+    cx, cy = 12.5, 12.5
+    for x in range(0, 26):
+        for y in range(0, 26):
+            d = ((x - cx) ** 2 + (y - cy) ** 2) ** 0.5
+            if d > 12.4:
+                continue
+            if d > 11.4:
+                c = CONTORNO
+            elif d > 9.2:
+                luz = (cx - x) + (cy - y)  # brillo arriba-izquierda
+                c = ORO_CLARO if luz > 6 else ORO if luz > -4 else ORO_MEDIO
+            elif d > 8.4:
+                c = ORO_OSC
+            else:
+                t = d / 8.4
+                if furia:
+                    c = (int(230 - 130 * t), int(40 - 28 * t), int(22 - 14 * t))
+                else:
+                    c = (int(214 - 100 * t), int(96 - 66 * t), int(36 - 22 * t))
+            _px(img, x, y + oy, c)
+    # calavera cornuda dentro del medallón
+    hueso, hueso_osc = (240, 226, 196), (196, 176, 140)
+    ojo = (255, 60, 30) if furia else (255, 222, 60)
+    calavera = [
+        "..X.......X..",
+        "..XX.....XX..",
+        "...XXXXXXX...",
+        "..XXXXXXXXX..",
+        ".XXXXXXXXXXX.",
+        ".XXOOXXXOOXX.",
+        ".XXOOXXXOOXX.",
+        ".XXXXX.XXXXX.",
+        "..XXXX.XXXX..",
+        "...XXXXXXX...",
+        "...X.X.X.X...",
+    ]
+    for j, fila in enumerate(calavera):
+        for i, ch in enumerate(fila):
+            x, y = 6 + i, 6 + j
+            if ch == "X":
+                _px(img, x, y + oy, hueso if j < 8 else hueso_osc)
+            elif ch == "O":
+                _px(img, x, y + oy, ojo)
+    # goterones de azufre bajo el medallón
+    _gota(img, 7, 23, 5, oy)
+    _gota(img, 13, 24, 6, oy)
+    _gota(img, 18, 22, 4, oy)
+
+
+def _relleno(img, ox, oy, furia):
+    for x in range(120):
+        t = x / 119.0
+        if furia:
+            base = (int(150 + 100 * t), int(22 + 70 * t), int(16 + 20 * t))
+        else:
+            base = (int(214 + 32 * t), int(108 + 112 * t), int(26 + 70 * t))
+        for y in range(7):
+            k = (60, 34, 18, 0, -10, -28, -44)[y]
+            c = tuple(max(0, min(255, v + k)) for v in base)
+            if (x + y * 3) % 23 == 0 and y in (1, 2):
+                c = (255, 250, 220)
+            _px(img, ox + x, oy + y, c)
+
+
+def barra():
+    # 256x80: marcos normal (y=0) y furia (y=32); rellenos normal (y=64) y furia (y=72)
+    img = nuevo(256, 80)
+    _marco(img, 0, False)
+    _marco(img, 32, True)
+    _relleno(img, 0, 64, False)
+    _relleno(img, 0, 72, True)
+    return img
+
+
 def guardar(img, rel):
     ruta = os.path.join(RAIZ, rel)
     os.makedirs(os.path.dirname(ruta), exist_ok=True)
@@ -203,16 +345,11 @@ if __name__ == "__main__":
     guardar(murcielago(), "entity/murcielago_mutante/murcielago_mutante.png")
     guardar(ojos((255, 226, 60)), "entity/murcielago_mutante/murcielago_mutante_ojos.png")
     guardar(ojos((255, 40, 24)), "entity/murcielago_mutante/murcielago_mutante_ojos_furia.png")
-    guardar(recolorear(os.path.join(VAN, "silverfish.png"),
-                       [(92, 70, 14), (150, 122, 24), (206, 182, 40), (236, 214, 70), (252, 238, 130)]),
-            "entity/lepisma_sulfurico.png")
     guardar(recolorear(os.path.join(VAN, "bat_spawn_egg.png"),
                        [(40, 8, 12), (74, 18, 22), (110, 28, 30), (206, 182, 40), (246, 228, 92)]),
             "item/murcielago_mutante_spawn_egg.png")
-    guardar(recolorear(os.path.join(VAN, "silverfish_spawn_egg.png"),
-                       [(92, 70, 14), (150, 122, 24), (206, 182, 40), (236, 214, 70), (252, 238, 130)]),
-            "item/lepisma_sulfurico_spawn_egg.png")
     guardar(bola(), "item/bola_azufre.png")
+    guardar(barra(), "gui/barra_extremo.png")
     icono = murcielago().crop((0, 16, 28, 28)).resize((112, 48), Image.NEAREST)
     lienzo = nuevo(128, 128)
     lienzo.paste(icono, (8, 40))

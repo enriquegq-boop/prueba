@@ -1,12 +1,9 @@
 {
   "entity.extremo_jefes.murcielago_mutante": "Mutant Bat",
-  "entity.extremo_jefes.lepisma_sulfurico": "Sulfuric Silverfish",
   "entity.extremo_jefes.bola_azufre": "Sulfur Ball",
   "item.extremo_jefes.murcielago_mutante_spawn_egg": "Mutant Bat Spawn Egg",
-  "item.extremo_jefes.lepisma_sulfurico_spawn_egg": "Sulfuric Silverfish Spawn Egg",
   "item.extremo_jefes.bola_azufre": "Sulfur Ball",
   "anuncio.extremo_jefes.murcielago_mutante.despierta": "The Mutant Bat has awakened in the infected mines!",
-  "anuncio.extremo_jefes.lepisma_sulfurico.despierta": "The Sulfuric Silverfish has awakened: small parasites spawned by the dreaded Mutant Bat. Special ability: if it hits you, it teleports you one block down.",
   "anuncio.extremo_jefes.murcielago_mutante.enfurecido": "The Mutant Bat is enraged!",
-  "anuncio.extremo_jefes.murcielago_mutante.derrotado": "The Mutant Bat has fallen! Its silverfish die with it."
+  "anuncio.extremo_jefes.murcielago_mutante.derrotado": "The Mutant Bat has fallen!"
 }

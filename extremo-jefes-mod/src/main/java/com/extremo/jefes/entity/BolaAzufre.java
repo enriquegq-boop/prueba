@@ -62,7 +62,7 @@ public class BolaAzufre extends Fireball {
 
 	@Override
 	protected boolean canHitEntity(final Entity entity) {
-		if (entity instanceof MurcielagoMutante || entity instanceof LepismaSulfurico) {
+		if (entity instanceof MurcielagoMutante) {
 			return false;
 		}
 		return super.canHitEntity(entity);

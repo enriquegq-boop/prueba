@@ -1,6 +1,0 @@
-{
-  "parent": "minecraft:item/generated",
-  "textures": {
-    "layer0": "extremo_jefes:item/lepisma_sulfurico_spawn_egg"
-  }
-}
