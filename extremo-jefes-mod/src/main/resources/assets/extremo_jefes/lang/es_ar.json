@@ -1,0 +1,12 @@
+{
+  "entity.extremo_jefes.murcielago_mutante": "Murciélago Mutante",
+  "entity.extremo_jefes.lepisma_sulfurico": "Lepisma Sulfúrico",
+  "entity.extremo_jefes.bola_azufre": "Bola de azufre",
+  "item.extremo_jefes.murcielago_mutante_spawn_egg": "Huevo de Murciélago Mutante",
+  "item.extremo_jefes.lepisma_sulfurico_spawn_egg": "Huevo de Lepisma Sulfúrico",
+  "item.extremo_jefes.bola_azufre": "Bola de azufre",
+  "anuncio.extremo_jefes.murcielago_mutante.despierta": "¡El Murciélago Mutante ha despertado en las minas infectadas!",
+  "anuncio.extremo_jefes.lepisma_sulfurico.despierta": "El Lepisma Sulfúrico ha despertado: pequeños parásitos engendrados por el temible Murciélago Mutante. Habilidad especial: si te golpea, te teletransportará un bloque hacia abajo.",
+  "anuncio.extremo_jefes.murcielago_mutante.enfurecido": "¡El Murciélago Mutante se ha enfurecido!",
+  "anuncio.extremo_jefes.murcielago_mutante.derrotado": "¡El Murciélago Mutante ha caído! Sus lepismas mueren con él."
+}

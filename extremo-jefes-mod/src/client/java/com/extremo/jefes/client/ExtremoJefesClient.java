@@ -1,0 +1,20 @@
+package com.extremo.jefes.client;
+
+import com.extremo.jefes.client.model.MurcielagoMutanteModel;
+import com.extremo.jefes.client.render.LepismaSulfuricoRenderer;
+import com.extremo.jefes.client.render.MurcielagoMutanteRenderer;
+import com.extremo.jefes.registry.ModEntities;
+import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.ModelLayerRegistry;
+import net.minecraft.client.renderer.entity.ThrownItemRenderer;
+
+public class ExtremoJefesClient implements ClientModInitializer {
+	@Override
+	public void onInitializeClient() {
+		ModelLayerRegistry.registerModelLayer(MurcielagoMutanteModel.LAYER, MurcielagoMutanteModel::createBodyLayer);
+		EntityRendererRegistry.register(ModEntities.MURCIELAGO_MUTANTE, MurcielagoMutanteRenderer::new);
+		EntityRendererRegistry.register(ModEntities.LEPISMA_SULFURICO, LepismaSulfuricoRenderer::new);
+		EntityRendererRegistry.register(ModEntities.BOLA_AZUFRE, context -> new ThrownItemRenderer<>(context, 2.0F, true));
+	}
+}

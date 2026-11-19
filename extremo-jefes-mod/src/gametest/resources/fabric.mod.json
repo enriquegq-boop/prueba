@@ -1,0 +1,14 @@
+{
+	"schemaVersion": 1,
+	"id": "extremo_jefes_pruebas",
+	"version": "1.0.0",
+	"name": "Extremo Jefes - pruebas",
+	"environment": "*",
+	"entrypoints": {
+		"fabric-gametest": ["com.extremo.jefes.pruebas.PruebasMurcielago"],
+		"fabric-client-gametest": ["com.extremo.jefes.pruebas.PruebaVisualMurcielago"]
+	},
+	"depends": {
+		"extremo_jefes": "*"
+	}
+}

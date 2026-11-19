@@ -1,0 +1,21 @@
+{
+	"schemaVersion": 1,
+	"id": "extremo_jefes",
+	"version": "${version}",
+	"name": "Extremo Jefes",
+	"description": "Jefes para la serie Extremo. Jefe 1: Murciélago Mutante.",
+	"authors": ["Serie Extremo"],
+	"license": "All-Rights-Reserved",
+	"icon": "assets/extremo_jefes/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": ["com.extremo.jefes.ExtremoJefes"],
+		"client": ["com.extremo.jefes.client.ExtremoJefesClient"]
+	},
+	"depends": {
+		"fabricloader": ">=0.20.1",
+		"minecraft": "~26.2",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}
