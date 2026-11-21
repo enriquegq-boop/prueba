@@ -4,7 +4,7 @@ Jefes para la serie **Extremo**. Se van añadiendo de uno en uno.
 
 | # | Jefe | Estado |
 |---|---|---|
-| 1 | Murciélago Mutante | ✅ hecho (los Lepismas Sulfúricos llegarán al unirlo con el mod de mobs de azufre) |
+| 1 | Murciélago Mutante | ✅ hecho |
 
 ## Instalación
 
@@ -33,7 +33,19 @@ Al aparecer avisa en el chat a los jugadores cercanos (96 bloques):
 | Furia (≤ 50 % de vida) | Chillido que te empuja hacia atrás, ojos y barra rojos, ataques más rápidos |
 | Al morir | Suelta 3-6 diamantes, 4-10 azufre potente, 1-2 manzanas de oro y 150 de experiencia |
 
-Pendiente: unirlo con el mod de mobs de azufre para que engendre los Lepismas Sulfúricos.
+## Integración con Extremo3 (mod de WasterTV)
+
+Si en la carpeta `mods` está también **Extremo3** (con GeckoLib), el Murciélago Mutante:
+
+- Engendra los **Lepismas Sulfúricos de Extremo3** junto a ti: 2 cada ~11 s (máx. 6 vivos);
+  enfurecido 4 cada ~8 s (máx. 10) y una oleada de 4 al enfurecerse.
+- Al morir, **sus** lepismas mueren con él (los demás no).
+- Usa **la misma barra de vida que el Dragón de Azufre y el Piglin Brutal Mutante** de Extremo3
+  (su textura, misma posición arriba a la izquierda y mismos colores).
+
+Sin Extremo3 el jefe funciona igual, sin lepismas y con su barra propia.
+Este mod **no incluye ni modifica** Extremo3: solo lo usa si está instalado (su licencia no permite
+redistribuirlo ni modificarlo).
 
 ## Para desarrolladores
 

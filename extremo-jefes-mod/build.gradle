@@ -3,6 +3,10 @@ plugins {
 }
 
 repositories {
+	maven {
+		name = "GeckoLib"
+		url = "https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/"
+	}
 	// Add repositories to retrieve artifacts from in here.
 	// You should only use this when depending on other mods because
 	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
@@ -30,6 +34,13 @@ dependencies {
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 	// Fabric API va dentro del .jar: así basta con arrastrar un solo archivo a la carpeta mods.
 	include "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+	// Solo para probar la integración en desarrollo (NO se meten en el .jar):
+	// el mod Extremo3 de WasterTV (ponlo en libs-local/) y su dependencia GeckoLib.
+	if (file("libs-local").exists()) {
+		runtimeOnly fileTree(dir: "libs-local", include: "*.jar")
+		runtimeOnly "com.geckolib:geckolib-fabric-26.2:5.5.5"
+	}
 }
 
 processResources {

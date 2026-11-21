@@ -1,16 +1,22 @@
 package com.extremo.jefes.pruebas;
 
 import com.extremo.jefes.BarraExtremo;
+import com.extremo.jefes.IntegracionExtremo3;
 import com.extremo.jefes.entity.BolaAzufre;
 import com.extremo.jefes.entity.MurcielagoMutante;
 import com.extremo.jefes.registry.ModEntities;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.contents.TranslatableContents;
+import java.util.List;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.BossEvent;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.animal.pig.Pig;
 import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.phys.Vec3;
 
@@ -88,7 +94,9 @@ public class PruebasMurcielago {
 
 	@GameTest(structure = ARENA, maxTicks = 100)
 	public void laBolaDeAzufreHaceDanoYEnvenena(final GameTestHelper h) {
-		Villager diana = h.spawn(EntityTypes.VILLAGER, new Vec3(8.5, 1, 8.5));
+		// Diana: un cerdo quieto (con Extremo3 los aldeanos están protegidos de proyectiles,
+		// y los zombis son inmunes al veneno).
+		Pig diana = h.spawn(EntityTypes.PIG, new Vec3(8.5, 1, 8.5));
 		diana.setNoAi(true);
 		MurcielagoMutante jefe = h.spawn(ModEntities.MURCIELAGO_MUTANTE, new Vec3(2, 7, 2));
 		jefe.setNoAi(true);
@@ -98,7 +106,7 @@ public class PruebasMurcielago {
 		bola.setPos(origen);
 		h.getLevel().addFreshEntity(bola);
 		h.succeedWhen(() -> {
-			h.assertTrue(diana.getHealth() < diana.getMaxHealth(), "La bola debería hacer daño");
+			h.assertTrue(diana.getHealth() < diana.getMaxHealth(), "La bola debería hacer daño (vida=" + diana.getHealth() + ", bolaViva=" + bola.isAlive() + ", bolaPos=" + bola.position() + ", diana=" + diana.position() + ", invul=" + diana.isInvulnerable() + ")");
 			h.assertTrue(diana.hasEffect(MobEffects.POISON), "La bola debería envenenar");
 		});
 	}
@@ -110,6 +118,57 @@ public class PruebasMurcielago {
 		h.succeedWhen(() -> {
 			h.assertTrue(!jefe.isAlive(), "El jefe debería estar muerto");
 			h.assertTrue(jefe.getBossEvent().getProgress() == 0.0F, "La barra debería quedar vacía");
+		});
+	}
+
+	@GameTest(structure = ARENA, maxTicks = 400)
+	public void engendraLepismasDeExtremo3(final GameTestHelper h) {
+		if (!IntegracionExtremo3.cargado()) {
+			h.succeed();
+			return;
+		}
+		Villager diana = dianaResistente(h, new Vec3(8.5, 1, 8.5));
+		MurcielagoMutante jefe = h.spawn(ModEntities.MURCIELAGO_MUTANTE, new Vec3(3, 6, 3));
+		jefe.setTarget(diana);
+		h.succeedWhen(() -> {
+			if (jefe.getTarget() == null) {
+				jefe.setTarget(diana);
+			}
+			List<Entity> lepismas = jefe.misLepismas(h.getLevel());
+			h.assertTrue(jefe.getTotalLepismas() >= 1 && !lepismas.isEmpty(), "Todavía no ha engendrado lepismas (" + jefe.getTotalLepismas() + ")");
+			for (Entity l : lepismas) {
+				h.assertTrue(
+					BuiltInRegistries.ENTITY_TYPE.getKey(l.getType()).equals(IntegracionExtremo3.LEPISMA_SULFURICO),
+					"El lepisma debería ser el de Extremo3 y es " + BuiltInRegistries.ENTITY_TYPE.getKey(l.getType())
+				);
+			}
+		});
+	}
+
+	@GameTest(structure = ARENA, maxTicks = 80)
+	public void susLepismasMuerenConElPeroNoLosAjenos(final GameTestHelper h) {
+		if (!IntegracionExtremo3.cargado()) {
+			h.succeed();
+			return;
+		}
+		Villager diana = dianaResistente(h, new Vec3(8.5, 1, 8.5));
+		MurcielagoMutante jefe = h.spawn(ModEntities.MURCIELAGO_MUTANTE, new Vec3(8, 6, 8));
+		jefe.setNoAi(true);
+		int engendrados = jefe.engendrarLepismas(h.getLevel(), diana, 3);
+		h.assertTrue(engendrados == 3, "Debería haber engendrado 3 lepismas y engendró " + engendrados);
+		List<Entity> suyos = jefe.misLepismas(h.getLevel());
+		@SuppressWarnings("unchecked")
+		EntityType<Entity> tipo = (EntityType<Entity>) IntegracionExtremo3.tipoLepisma().orElseThrow();
+		Entity ajeno = h.spawn(tipo, new Vec3(13, 1, 13));
+		if (ajeno instanceof net.minecraft.world.entity.Mob mob) {
+			mob.setNoAi(true); // si no, se mete dentro de la piedra como un pececillo de plata
+		}
+		h.runAfterDelay(2, () -> jefe.kill(h.getLevel()));
+		h.succeedWhen(() -> {
+			for (Entity l : suyos) {
+				h.assertTrue(!l.isAlive(), "Sus lepismas deberían morir con el jefe");
+			}
+			h.assertTrue(ajeno.isAlive(), "Un lepisma que no es suyo no debería morir");
 		});
 	}
 }
